@@ -1,358 +1,406 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Era Agent-Eval — interactive demo</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Era Agent-Eval — a measurement instrument for agentic chains</title>
 <style>
   :root{
-    --bg:#0b0f17; --panel:#121826; --panel2:#0e1420; --ink:#e7edf5; --muted:#8a97ab;
-    --line:#1e2940; --accent:#5b8cff; --good:#37d39a; --bad:#ff6b6b; --warn:#f5b342;
-    --chip:#1a2236;
+    --bg:#0b0e14; --panel:#141922; --panel2:#1b2230; --ink:#e6edf3; --mut:#95a3b8;
+    --line:#26303f; --teal:#3fd0c9; --violet:#a78bfa; --amber:#f5b953; --red:#f2668b;
+    --green:#59d499; --blue:#5aa9f7;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,#16203a 0%,var(--bg) 55%);
-       color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-  a{color:var(--accent);text-decoration:none}
-  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
-  header.hero{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
-  .kicker{color:var(--accent);font-weight:700;letter-spacing:.14em;font-size:12px;text-transform:uppercase}
-  h1{margin:.1em 0 .1em;font-size:30px;letter-spacing:-.02em}
-  .sub{color:var(--muted);max-width:760px}
-  .links{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:13.5px}
-  .links a{background:var(--chip);padding:6px 12px;border-radius:999px;border:1px solid var(--line)}
-  .tabs{display:flex;gap:6px;margin:24px 0 18px;flex-wrap:wrap}
-  .tab{background:var(--chip);border:1px solid var(--line);color:var(--muted);padding:9px 16px;
-       border-radius:10px;cursor:pointer;font-weight:600;font-size:13.5px}
-  .tab.active{color:var(--ink);border-color:var(--accent);background:#16213c}
-  .panel{display:none;animation:f .25s ease}
-  .panel.active{display:block}
-  @keyframes f{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-  .grid{display:grid;gap:14px}
-  .cards{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
-  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
-        border-radius:14px;padding:16px}
-  .card h4{margin:0 0 6px;color:var(--muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
-  .stat{font-size:26px;font-weight:700;letter-spacing:-.02em}
-  .ci{color:var(--muted);font-size:12.5px;margin-top:2px}
-  .block{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
-         border-radius:16px;padding:20px;margin:14px 0}
-  .block h3{margin:0 0 4px;font-size:17px}
-  .block p.note{color:var(--muted);margin:.2em 0 14px;font-size:13.5px}
-  canvas{max-width:100%}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  @media(max-width:720px){.row{grid-template-columns:1fr}}
-  .pill{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:8px}
-  .pill.sig{background:rgba(255,107,107,.16);color:var(--bad);border:1px solid rgba(255,107,107,.4)}
-  .pill.ns{background:rgba(138,151,171,.14);color:var(--muted);border:1px solid var(--line)}
-  .pill.ok{background:rgba(55,211,154,.16);color:var(--good);border:1px solid rgba(55,211,154,.4)}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--teal)}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+  header.hero{padding:64px 0 34px;border-bottom:1px solid var(--line);
+    background:radial-gradient(1200px 400px at 70% -10%,rgba(63,208,201,.10),transparent 60%),
+               radial-gradient(900px 380px at 10% 0%,rgba(167,139,250,.10),transparent 55%)}
+  .eyebrow{letter-spacing:.16em;text-transform:uppercase;color:var(--teal);font-size:12px;font-weight:700}
+  h1{font-size:38px;line-height:1.12;margin:12px 0 8px;letter-spacing:-.02em}
+  h1 .grad{background:linear-gradient(90deg,var(--teal),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--mut);font-size:17px;max-width:760px}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+  .chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    padding:7px 14px;font-size:13px;color:var(--ink)}
+  .chip b{color:var(--teal)}
+  section{padding:40px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:24px;margin:0 0 4px;letter-spacing:-.01em}
+  h2 .n{color:var(--violet);font-variant-numeric:tabular-nums;margin-right:8px}
+  .lede{color:var(--mut);max-width:820px;margin:0 0 22px}
+  .grid{display:grid;gap:16px}
+  .g4{grid-template-columns:repeat(4,1fr)} .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:820px){.g4,.g3,.g2{grid-template-columns:1fr 1fr}}
+  @media(max-width:560px){.g4,.g3,.g2{grid-template-columns:1fr}h1{font-size:30px}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .stat .k{color:var(--mut);font-size:12.5px;text-transform:uppercase;letter-spacing:.05em}
+  .stat .v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:4px}
+  .stat .ci{color:var(--mut);font-size:12px;margin-top:2px}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;font-weight:700}
+  .pill.new{background:rgba(89,212,153,.14);color:var(--green);border:1px solid rgba(89,212,153,.3)}
   table{width:100%;border-collapse:collapse;font-size:13.5px}
   th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
-  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
-  .slider{display:flex;align-items:center;gap:12px;margin:10px 0}
-  .slider label{width:160px;color:var(--muted);font-size:13px}
-  input[type=range]{flex:1;accent-color:var(--accent)}
-  .best{background:#16213c;border:1px solid var(--accent);border-radius:12px;padding:12px 14px;margin-top:12px}
-  .best b{color:var(--good)}
-  .q{border-left:3px solid var(--line);padding:8px 0 8px 14px;margin:12px 0}
-  .q.sig{border-color:var(--bad)} .q.ns{border-color:var(--muted)}
-  .q .d{font-weight:700} .q .n{color:var(--muted);font-size:13px}
-  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
-  .foot{color:var(--muted);font-size:12.5px;margin-top:26px;text-align:center}
-  .legend{color:var(--muted);font-size:12.5px;margin-top:8px}
-  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+  th{color:var(--mut);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .good{color:var(--green)} .bad{color:var(--red)} .warn{color:var(--amber)}
+  .note{color:var(--mut);font-size:13px;margin-top:12px}
+  .callout{background:var(--panel2);border-left:3px solid var(--teal);border-radius:8px;padding:12px 16px;margin-top:16px;color:var(--ink)}
+  .kv{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .tag{font-size:11.5px;padding:3px 9px;border-radius:6px;background:rgba(242,102,139,.12);color:var(--red);border:1px solid rgba(242,102,139,.28)}
+  .tag.ok{background:rgba(89,212,153,.12);color:var(--green);border-color:rgba(89,212,153,.28)}
+  .flow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
+  .stage{flex:1;min-width:170px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .stage h4{margin:0 0 4px;font-size:15px} .stage .role{color:var(--mut);font-size:12px}
+  .arrow{align-self:center;color:var(--mut);font-size:22px}
+  pre{background:#0a0d13;border:1px solid var(--line);border-radius:10px;padding:14px;overflow:auto;
+    font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:#cdd9e5}
+  .slider{display:flex;align-items:center;gap:10px;margin:6px 0}
+  .slider label{width:150px;color:var(--mut);font-size:13px}
+  input[type=range]{flex:1;accent-color:var(--teal)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--mut);margin-top:8px}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  footer{padding:40px 0 70px;color:var(--mut);font-size:13.5px}
+  .foot-cmds code{display:block;background:#0a0d13;border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:6px 0;color:#cdd9e5}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header class="hero">
-    <span class="kicker">Era · Agent Evaluation Framework</span>
-    <h1>A measurement instrument for agents — live</h1>
-    <div class="sub">Evaluate one Pydantic AI agent, attribute quality to each component, then optimise a
-      chain of three. Every number below is produced by the framework itself (offline simulator with known
-      ground truth, plus a real run against Era staging inference). Drag the sliders in <b>The chain</b> tab.</div>
-    <div class="links">
-      <a id="repoLink" href="#">⌥ GitHub repo</a>
-      <a id="prLink" href="#">⎇ Pull request #1</a>
-      <a href="#" id="ciLink">✓ CI: passing</a>
-    </div>
-  </header>
-
-  <div class="tabs">
-    <div class="tab active" data-t="p1">① Single agent</div>
-    <div class="tab" data-t="p2">② The chain (interactive)</div>
-    <div class="tab" data-t="live">③ Live Era run</div>
-    <div class="tab" data-t="how">How it works</div>
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">Era · Agent Evaluation</div>
+  <h1>A measurement instrument for <span class="grad">agentic chains</span></h1>
+  <p class="sub">Evaluate one Pydantic-AI agent — then a chain of three — quantitatively, with
+  attribution to each component, honest uncertainty, and a deployable routing policy. Every
+  number on this page is produced by the framework at seed&nbsp;0.</p>
+  <div class="chips">
+    <div class="chip"><b>71%</b> inference cost saved by per-category routing</div>
+    <div class="chip"><b>pass^k</b> exposes fragile configs average quality hides</div>
+    <div class="chip"><b>MAST</b> localizes <i>where</i> a chain breaks</div>
+    <div class="chip">framework-agnostic — Sim · Pydantic-AI · maseval</div>
   </div>
+</div></header>
 
-  <!-- PART 1 -->
-  <section class="panel active" id="p1">
-    <div class="grid cards" id="p1cards"></div>
-    <div class="row">
-      <div class="block">
-        <h3>Attribution — which component is responsible?</h3>
-        <p class="note">Paired Δ on success vs baseline. Red = the 95% CI excludes zero (a real effect, not noise).</p>
-        <canvas id="ablChart" height="220"></canvas>
+<div class="wrap">
+
+<!-- THE IDEA -->
+<section>
+  <h2>The one idea</h2>
+  <p class="lede">An agent run is <span class="mono">response = f(system_prompt, llm, tools | query)</span>.
+  Everything between input and output is observable, so it is measurable. Reduce every run —
+  simulated, a real Pydantic-AI agent, or one driven through maseval — to a single
+  <b>RunTrajectory</b>, and do <i>all</i> evaluation on that. The evaluator never needs to know
+  which framework produced the run.</p>
+  <div class="grid g3">
+    <div class="card"><div class="stat"><div class="k">Outcome axis</div><div class="v">success</div>
+      <div class="ci">+ output-valid, format adherence</div></div></div>
+    <div class="card"><div class="stat"><div class="k">Process axis</div><div class="v">tools / steps</div>
+      <div class="ci">precision, recall, error-rate, recovery</div></div></div>
+    <div class="card"><div class="stat"><div class="k">Resource axis</div><div class="v">latency / cost</div>
+      <div class="ci">tokens, $ per run</div></div></div>
+  </div>
+</section>
+
+<!-- PART 1 -->
+<section>
+  <h2><span class="n">01</span>Single agent — attribute quality to components</h2>
+  <p class="lede">Not one overall score: which of prompt / model / tools is responsible? Seeded,
+  bootstrapped, paired. A verdict counts only when the confidence interval excludes zero.</p>
+  <div class="grid g4">
+    <div class="card stat"><div class="k">Task success</div><div class="v">0.958</div><div class="ci">95% CI [0.90, 1.00] · n=240</div></div>
+    <div class="card stat"><div class="k">Tool precision</div><div class="v">0.961</div><div class="ci">useful / all tool calls</div></div>
+    <div class="card stat"><div class="k">Tool recall</div><div class="v">0.879</div><div class="ci">required tools used</div></div>
+    <div class="card stat"><div class="k">Cost / run</div><div class="v">$0.005</div><div class="ci">5.06 s latency</div></div>
+  </div>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card">
+      <h4 style="margin:0 0 8px">Tool value — Monte-Carlo Shapley</h4>
+      <svg id="shapley" viewBox="0 0 460 200" width="100%" height="200" role="img"></svg>
+      <div class="note">Fair credit per tool toward success, averaging marginal contribution over
+      join orders — handles interacting tools. <span class="good">calculator</span> carries this
+      quant-QA agent.</div>
+    </div>
+    <div class="card">
+      <h4 style="margin:0 0 8px">A/B verdict — strong vs weak model</h4>
+      <table>
+        <tr><th>model</th><th class="num">success</th><th class="num">Wilson CI</th></tr>
+        <tr><td>gpt-4o</td><td class="num">0.958</td><td class="num">[0.92, 0.98]</td></tr>
+        <tr><td>phi-3.5-mini</td><td class="num">0.763</td><td class="num">[0.70, 0.82]</td></tr>
+      </table>
+      <div class="callout">two-proportion z = <b>&minus;6.19</b>, p &asymp; <b>6&times;10&#8315;&#185;&#8304;</b> &rarr;
+      <span class="good">significant</span>, not noise. Wilson intervals + a min-runs guard refuse
+      false-confidence deltas.</div>
+    </div>
+  </div>
+</section>
+
+<!-- PART 2 -->
+<section>
+  <h2><span class="n">02</span>The chain A &rarr; B &rarr; C — propagation &amp; the Pareto frontier</h2>
+  <p class="lede">Three agents in series (research &rarr; analyse &rarr; synthesise). One primitive —
+  <span class="mono">intervene()</span> — changes exactly one stage and measures the <b>paired</b>
+  effect on the final answer <i>and</i> every stage. That answers Q1&ndash;Q4 with numbers.</p>
+  <div class="grid g4">
+    <div class="card stat"><div class="k">Chain success</div><div class="v">0.638</div><div class="ci">A 0.95 · B 0.71 · C 0.64</div></div>
+    <div class="card stat"><div class="k">Bottleneck</div><div class="v warn">Agent B</div><div class="ci">C inherits it</div></div>
+    <div class="card stat"><div class="k">Total latency</div><div class="v">15.8 s</div></div>
+    <div class="card stat"><div class="k">Total cost</div><div class="v">$0.009</div></div>
+  </div>
+  <div class="grid g3" style="margin-top:16px">
+    <div class="card"><b>Q1 · model swap (A&darr;)</b><p class="note">Final &Delta; <span class="bad">&minus;0.083*</span>.
+      A weaker upstream model sinks the whole chain; the effect attenuates downstream.</p></div>
+    <div class="card"><b>Q2 · tool swap (B loses execute_python)</b><p class="note">Final &Delta;
+      <span class="bad">&minus;0.350*</span> — the single most damaging change. Tools can matter more than models.</p></div>
+    <div class="card"><b>Q3 · upgrade A (near-ceiling)</b><p class="note">Final &Delta; &minus;0.008
+      <span class="mut">(n.s.)</span>. Coupling is state-dependent — don't spend on a stage that isn't the constraint.</p></div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h4 style="margin:0 0 4px">Accuracy · latency · cost — the frontier (drag the weights)</h4>
+    <div class="g2 grid" style="align-items:center">
+      <svg id="pareto" viewBox="0 0 480 300" width="100%" height="300" role="img"></svg>
+      <div>
+        <div class="slider"><label>latency weight</label><input id="wlat" type="range" min="0" max="1" step="0.05" value="0.3"><span id="wlatv" class="mono">0.30</span></div>
+        <div class="slider"><label>cost weight</label><input id="wcost" type="range" min="0" max="1" step="0.05" value="0.3"><span id="wcostv" class="mono">0.30</span></div>
+        <div id="paretoPick" class="callout"></div>
+        <div class="legend"><span><span class="dot" style="background:var(--teal)"></span>non-dominated config</span>
+          <span><span class="dot" style="background:var(--amber)"></span>best under current weights</span></div>
       </div>
-      <div class="block">
-        <h3>Tool value (Shapley credit)</h3>
-        <p class="note">Fair credit for each tool toward success, averaged over coalitions.</p>
-        <canvas id="shapChart" height="220"></canvas>
+    </div>
+    <div class="note">The optimiser rediscovers <i>&ldquo;spend on the bottleneck&rdquo;</i>: strong models on B/C
+    (analyse/synthesise), a cheap one on the easy research stage A. There is no single winner — only a
+    frontier and an explicit policy (the weights) for picking a point.</div>
+  </div>
+</section>
+
+<!-- ROUTING (NEW) -->
+<section>
+  <h2><span class="n">03</span>Routing policy &amp; cost cascade <span class="pill new">NEW</span></h2>
+  <p class="lede">The instrument becomes a decision. Per query <b>category</b>, walk the models
+  cheapest-first and route to the cheapest whose success <b>CI lower bound</b> clears the floor —
+  the same &ldquo;trustworthy, not noise&rdquo; rule as the CI gate. The cost-ordered ladder is a
+  <b>FrugalGPT cascade</b>: serve the cheap rung, escalate on low confidence.</p>
+  <div class="grid g2">
+    <div class="card">
+      <table>
+        <tr><th>query category</th><th>routed model</th><th>tools</th><th class="num">success</th><th class="num">$/run</th></tr>
+        <tr><td>arithmetic</td><td class="good">phi-3.5-mini</td><td class="mono">calculator</td><td class="num">0.97</td><td class="num">$0.00004</td></tr>
+        <tr><td>datetime</td><td class="good">phi-3.5-mini</td><td class="mono">datetime, calc</td><td class="num">0.97</td><td class="num">$0.00004</td></tr>
+        <tr><td>data_analysis</td><td>gpt-4o-mini</td><td class="mono">db, calc</td><td class="num">0.90</td><td class="num">$0.0006</td></tr>
+        <tr><td>doc_qa</td><td>gemma-2-27b</td><td class="mono">retrieve</td><td class="num">0.93</td><td class="num">$0.0021</td></tr>
+        <tr><td>web_research</td><td>gemma-2-27b</td><td class="mono">search, fetch, calc</td><td class="num">0.90</td><td class="num">$0.0046</td></tr>
+        <tr><td class="mut">default (unseen)</td><td class="mut">claude-3-5-sonnet</td><td class="mono mut">*</td><td class="num mut">&mdash;</td><td class="num mut">&mdash;</td></tr>
+      </table>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
+      <div class="k" style="color:var(--mut);text-transform:uppercase;letter-spacing:.06em;font-size:12px">Inference cost saved</div>
+      <div style="font-size:64px;font-weight:800;line-height:1;background:linear-gradient(90deg,var(--teal),var(--green));-webkit-background-clip:text;background-clip:text;color:transparent">71%</div>
+      <div class="note">vs always routing to the most-capable model — at &ge; the same measured quality.
+      Output: a versioned <span class="mono">routing_policy.json</span> the router loads at inference.</div>
+    </div>
+  </div>
+</section>
+
+<!-- RELIABILITY (NEW) -->
+<section>
+  <h2><span class="n">04</span>Reliability — pass^k, not just average quality <span class="pill new">NEW</span></h2>
+  <p class="lede">Average quality (pass@1) rewards a config that is <i>usually</i> right.
+  <b>pass^k</b> (&tau;-bench, arXiv:2406.12045) asks: does it solve the task on <i>all k</i> tries?
+  Cheap models look fine at pass@1 and collapse under repetition — the frontier over-selects them
+  unless you measure this.</p>
+  <div class="card">
+    <svg id="passk" viewBox="0 0 620 280" width="100%" height="280" role="img"></svg>
+    <div class="legend"><span><span class="dot" style="background:var(--teal)"></span>gpt-4o — 0.96 &rarr; 0.76</span>
+      <span><span class="dot" style="background:var(--red)"></span>phi-3.5-mini — 0.78 &rarr; <b>0.29</b></span></div>
+    <div class="note">Same golden set; both look acceptable at k=1. By k=8 the cheap model is
+    <span class="bad">2.6&times; less reliable</span>. pass^k is now a Pareto axis, so consistency is priced in.</div>
+  </div>
+</section>
+
+<!-- FAILURE MODES (NEW) -->
+<section>
+  <h2><span class="n">05</span>Failure modes — MAST taxonomy <span class="pill new">NEW</span></h2>
+  <p class="lede">A score says <i>whether</i> it failed; MAST (<span class="mono">arXiv:2503.13657</span>)
+  says <i>how</i>. A deterministic post-processor tags each run into the empirical multi-agent
+  failure taxonomy — and localizes the break in the chain.</p>
+  <div class="grid g2">
+    <div class="card">
+      <h4 style="margin:0 0 8px">Weak config · 137/180 runs failed</h4>
+      <svg id="mast" viewBox="0 0 460 170" width="100%" height="170" role="img"></svg>
+      <div class="note">Under-tooled + cheap model &rarr; mostly <b>disobey_task_spec</b> (skips a required
+      tool) and <b>no/incorrect verification</b> (confidently wrong, never self-checks).</div>
+    </div>
+    <div class="card">
+      <h4 style="margin:0 0 10px">Where the chain breaks (B under-tooled)</h4>
+      <div class="flow">
+        <div class="stage"><h4>A · research <span class="tag ok">ok</span></h4><div class="role">clean hand-off (q&asymp;0.9)</div></div>
+        <div class="arrow">&rarr;</div>
+        <div class="stage"><h4>B · analyse</h4><div class="role">got good input, still failed</div>
+          <div class="kv"><span class="tag">ignored_upstream_input</span><span class="tag">disobey_task_spec</span></div></div>
+        <div class="arrow">&rarr;</div>
+        <div class="stage"><h4>C · synthesise</h4><div class="role">inherited bad input</div>
+          <div class="kv"><span class="tag">information_loss</span><span class="tag">premature_termination</span></div></div>
       </div>
+      <div class="callout">MAST pins the loss to <b>B</b> (an inter-agent misalignment), with C merely
+      inheriting it — exactly the credit-assignment most eval tools miss.</div>
     </div>
-    <div class="row">
-      <div class="block">
-        <h3>Sensitivity — success vs temperature</h3>
-        <p class="note">Higher sampling temperature trades reliability.</p>
-        <canvas id="tempChart" height="200"></canvas>
-      </div>
-      <div class="block">
-        <h3>A/B verdict — strong vs weak model</h3>
-        <p class="note">Wilson CIs + two-proportion z-test + effect size (borrowed from MultiEval).</p>
-        <div id="abBox"></div>
-      </div>
-    </div>
-    <div class="block">
-      <h3>Counterfactual (but-for) tool usefulness</h3>
-      <p class="note">Leave-one-out: remove exactly one tool, hold the rest fixed. The causal question you ask
-        when pruning an agent. Complements Shapley.</p>
-      <div id="cfBox"></div>
-    </div>
-  </section>
+  </div>
+</section>
 
-  <!-- PART 2 -->
-  <section class="panel" id="p2">
-    <div class="grid cards" id="p2cards"></div>
+<!-- TELEMETRY (NEW) -->
+<section>
+  <h2><span class="n">06</span>Continuous monitoring — evals &rarr; Grafana <span class="pill new">NEW</span></h2>
+  <p class="lede">The north star is a bench that <i>gates what ships</i>. Beyond the CI pass/fail gate,
+  every eval number is exported as Prometheus/OpenMetrics and pushed to the team's Grafana
+  (telemetry.era.world) — quality, cost, the routing savings, and the pass^k curve, next to the
+  production service dashboards.</p>
+  <div class="grid g2">
+    <div class="card"><pre>agenteval_success{config="research-qa"} 0.958
+agenteval_route_cascade_savings 0.711
+agenteval_route_expected_success{
+  category="arithmetic",
+  model="phi-3.5-mini"} 0.967
+agenteval_pass_hat_k{config="baseline",k="1"} 0.961
+agenteval_pass_hat_k{config="baseline",k="8"} 0.755</pre>
+      <div class="note">Batch job &rarr; Pushgateway.
+      <span class="mono">export_prometheus(single, policy, reliability)</span>.</div>
+    </div>
+    <div class="card">
+      <h4 style="margin:0 0 8px">CI shipping gate</h4>
+      <table>
+        <tr><th>gate</th><th class="num">CI lower bound</th><th>verdict</th></tr>
+        <tr><td>single-agent success</td><td class="num">0.933</td><td class="good">&ge; 0.85 &check;</td></tr>
+        <tr><td>chain success</td><td class="num">0.550</td><td class="good">&ge; 0.50 &check;</td></tr>
+        <tr><td>routing quality floor</td><td class="num">0.80</td><td class="good">enforced &check;</td></tr>
+      </table>
+      <div class="note">Merge blocks if a <b>confidence-bounded</b> metric regresses — the smallest real
+      version of &ldquo;trustworthy enough to gate what ships&rdquo;.</div>
+    </div>
+  </div>
+</section>
 
-    <div class="block">
-      <h3>Propagation through the chain — Q1–Q4</h3>
-      <p class="note">Change one component in one agent; measure the paired effect on the final answer and on
-        downstream stages. Red = significant.</p>
-      <div id="qBox"></div>
-    </div>
+<!-- TRUST -->
+<section>
+  <h2><span class="n">07</span>Why you can trust the numbers</h2>
+  <div class="grid g4">
+    <div class="card"><b>Seeded</b><p class="note">BLAKE2b digest seeds — process-independent determinism at seed 0.</p></div>
+    <div class="card"><b>Bootstrapped</b><p class="note">Every metric carries a 95% CI; verdicts require the CI to exclude zero.</p></div>
+    <div class="card"><b>Paired</b><p class="note">Interventions share seeds, so a &Delta; is the change — not luck.</p></div>
+    <div class="card"><b>Self-validating</b><p class="note">Recovers planted ground truth before it's trusted on real models. 71 tests green.</p></div>
+  </div>
+</section>
 
-    <div class="block">
-      <h3>Pareto explorer — accuracy vs latency vs cost</h3>
-      <p class="note">Every dot is a 3-agent chain configuration (real measurements). There's no single winner —
-        only a frontier and a <b>policy</b>. Drag the weights to set how much you penalise latency and cost; the
-        framework's scalarised utility re-ranks live and highlights the best pick.</p>
-      <div class="slider"><label>Latency weight</label>
-        <input type="range" id="wLat" min="0" max="1" step="0.05" value="0.3"><span class="mono" id="wLatV">0.30</span></div>
-      <div class="slider"><label>Cost weight</label>
-        <input type="range" id="wCost" min="0" max="1" step="0.05" value="0.3"><span class="mono" id="wCostV">0.30</span></div>
-      <canvas id="paretoChart" height="240"></canvas>
-      <div class="legend"><span class="dot" style="background:var(--good)"></span>best pick under current weights
-        &nbsp;&nbsp;<span class="dot" style="background:var(--accent)"></span>other configurations
-        &nbsp;·&nbsp; marker size = $ cost</div>
-      <div class="best" id="bestBox"></div>
-    </div>
-  </section>
-
-  <!-- LIVE -->
-  <section class="panel" id="live">
-    <div class="grid cards" id="livecards"></div>
-    <div class="block">
-      <h3>Real run — gpt-4o via Era staging inference</h3>
-      <p class="note">The same evaluator, pointed at a real model. Numeric judge for arithmetic, LLM-as-judge for
-        open-ended. Token handled by <span class="mono">$(era token --staging)</span> — never logged or committed.</p>
-      <table id="liveTable"><thead><tr><th>Task</th><th>Judge</th><th>Result</th></tr></thead><tbody></tbody></table>
-    </div>
-    <div class="block">
-      <h3>Findings reported back to the platform</h3>
-      <p class="note">Diagnosed while wiring the live path — reproduced with raw <span class="mono">curl</span>, so
-        server-side, not client bugs.</p>
-      <div id="bugBox"></div>
-    </div>
-  </section>
-
-  <!-- HOW -->
-  <section class="panel" id="how">
-    <div class="block">
-      <h3>The one idea</h3>
-      <p class="note" style="font-size:14.5px;color:var(--ink)">Every agent run —
-        <span class="mono">response = f(prompt, model, tools | query)</span> — is reduced to one
-        <b>RunTrajectory</b>. All evaluation runs on that object, so the simulator and a real model are
-        interchangeable, and the same attribution code works for prompt, model, tools, and every config lever.</p>
-    </div>
-    <div class="row">
-      <div class="block"><h3>Trustworthy, not noisy</h3><p class="note" style="color:var(--ink)">Seeded repeats,
-        bootstrap CIs, paired differencing, and an effect is only "real" if its interval excludes zero. The whole
-        run is reproducible across processes (a determinism bug was found and fixed + regression-tested).</p></div>
-      <div class="block"><h3>Trustworthy enough to gate what ships</h3><p class="note" style="color:var(--ink)">An
-        evals-as-CI gate blocks a release unless the confidence-interval <i>lower bound</i> clears a threshold —
-        statistical confidence, not a lucky average. 54 tests + the gate run green on every push.</p></div>
-    </div>
-    <div class="block"><h3>Self-validating</h3><p class="note" style="color:var(--ink)">The default subject is a
-      simulator with <i>planted</i> ground truth (each model's capability, which tools a task needs). A good
-      evaluator must recover it — and it does (weak models and vague prompts show significant drops; the calculator
-      tops the tool ranking). Only then is it pointed at real models.</p></div>
-  </section>
-
-  <div class="foot">Built for the Era agent-evaluation take-home · data generated by the framework
-    (<span class="mono">examples/run_part1.py</span>, <span class="mono">run_part2.py</span>,
-    <span class="mono">run_live.py</span>). Offline numbers are deterministic at seed 0.</div>
+<footer><div>
+  <b>Reproduce</b> — every number here is emitted by:
+  <div class="foot-cmds">
+    <code>python -m examples.run_part1   # single-agent attribution</code>
+    <code>python -m examples.run_part2   # chain propagation + Pareto</code>
+    <code>python -m examples.run_part3   # routing policy · pass^k · MAST · telemetry</code>
+    <code>pytest                         # 71 tests · deterministic at seed 0</code>
+  </div>
+  <p>Simulator by default (known ground truth); the same RunTrajectory runs against real models via
+  the Era inference API (<span class="mono">era login --staging</span>) and interops with maseval.
+  Ideas drawn from &tau;-bench, MAST, FrugalGPT, G-Eval, and the DSPy/GEPA line — see
+  <span class="mono">docs/</span> and <span class="mono">NEXT_IDEAS.md</span>.</p>
+</div></footer>
 </div>
 
 <script>
-// ---- DATA (embedded fallback; overridden by ./data/*.json if present) -------
 const DATA = {
-  meta:{repo:"https://github.com/Stuti-Era/era-agent-eval",
-        pr:"https://github.com/Stuti-Era/era-agent-eval/pull/1",
-        ci:"https://github.com/Stuti-Era/era-agent-eval/actions"},
-  p1:{
-    cards:[["success","0.938","95% CI 0.904–0.967"],["output valid","1.000","typed contract"],
-           ["tool precision","0.958","useful calls"],["tool recall","0.854","required tools called"],
-           ["latency","5.09 s","per run"],["cost","$0.005","per run"]],
-    ablations:[
-      {label:"model → claude-3.5-sonnet",delta:0.008,sig:false},
-      {label:"model → mixtral-8x7b",delta:-0.092,sig:true},
-      {label:"model → phi-3.5-mini",delta:-0.200,sig:true},
-      {label:"prompt: vague",delta:-0.087,sig:true},
-      {label:"prompt: sharp",delta:0.017,sig:false},
-      {label:"temperature 0.2→1.2",delta:-0.042,sig:true},
-      {label:"max_steps 6→2",delta:-0.017,sig:true}],
-    shapley:[["calculator",0.305],["web_search",0.170],["retrieve_documents",0.112],
-             ["get_current_datetime",0.081],["query_database",0.074],["fetch_url",0.066]],
-    temp:{x:[0,0.2,0.5,0.8,1.2,1.8],y:[0.938,0.938,0.938,0.917,0.896,0.850]},
-    ab:{a:0.971,a_lo:0.941,a_hi:0.986,b:0.750,b_lo:0.692,b_hi:0.801,z:-6.98,p:0.000},
-    cf:"Removing the calculator drops success by 0.40 (significant); irrelevant tools (e.g. query_database) move it ~0 — the framework correctly tells dead weight from load-bearing tools."
-  },
-  p2:{
-    cards:[["chain success","0.675","CI 0.575–0.775"],["total latency","15.8 s","A+B+C"],
-           ["total cost","$0.009","per chain run"],["bottleneck","Agent B","0.70 vs A 0.98"]],
-    q:[{q:"Q1 · swap Agent A's model (gpt-4o → phi-3.5-mini)",d:-0.083,sig:true,
-        n:"Damage propagates downstream: B −0.133, C −0.083, though both were untouched."},
-       {q:"Q2 · remove execute_python from Agent B",d:-0.317,sig:true,
-        n:"B's own score craters −0.650 — the biggest hit of all. A tool can matter more than a model, and where you cut matters."},
-       {q:"Q3 · upgrade Agent A (already near-ceiling)",d:-0.008,sig:false,
-        n:"No effect — coupling is state-dependent. Don't spend to improve a stage that isn't the bottleneck."}],
-    pareto:[
-      {label:"A:gemma-27b  B:claude  C:claude",acc:0.867,lat:14977,cost:0.0130},
-      {label:"A:gemma-27b  B:gpt-4o  C:llama-405b",acc:0.800,lat:21874,cost:0.0107},
-      {label:"A:gemini-pro  B:gpt-4o  C:gemini-pro",acc:0.767,lat:19415,cost:0.0112},
-      {label:"A:mixtral  B:gemini-pro  C:claude",acc:0.733,lat:17619,cost:0.0115},
-      {label:"A:gemini-pro  B:gemini-pro  C:gemini-pro",acc:0.700,lat:21267,cost:0.0098},
-      {label:"A:phi  B:qwen-72b  C:gemini-pro",acc:0.667,lat:16786,cost:0.0070},
-      {label:"A:phi  B:gpt-4o-mini  C:gpt-4o",acc:0.633,lat:9550,cost:0.0083},
-      {label:"A:phi  B:llama-70b  C:llama-70b",acc:0.633,lat:16797,cost:0.0059},
-      {label:"A:phi  B:gemma-27b  C:gemma-27b",acc:0.533,lat:9141,cost:0.0061},
-      {label:"A:gemma-27b  B:phi  C:gpt-4o-mini",acc:0.367,lat:7859,cost:0.0061}],
-    refLat:12000, refCost:0.05
-  },
-  live:{
-    cards:[["model","gpt-4o","via Era staging"],["success","0.50","n=4 (2 tasks × 2)"],
-           ["latency","3.51 s","real wall-clock"],["cost","$0.0073","under $0.0104 est."]],
-    tasks:[{id:"q1 · 17% of 2,340",judge:"numeric",pass:true},
-           {id:"q3 · summarise internal refund policy",judge:"LLM-as-judge",pass:false,
-            note:"model has no real retrieval → correctly judged FAIL"}],
-    bugs:["GET /inference/models → HTTP 500 (“'str' object has no attribute 'get'”) — server-side",
-          "Anthropic model names → HTTP 502 (openai::gpt-4o works on the same token) — upstream"]
-  }
+  shapley: [["calculator",0.299],["web_search",0.175],["retrieve_documents",0.124],
+            ["query_database",0.083],["get_current_datetime",0.081],["fetch_url",0.063]],
+  passk: {ks:[1,2,3,5,8],
+          "gpt-4o":[0.961,0.925,0.891,0.831,0.755],
+          "phi-3.5-mini":[0.778,0.633,0.533,0.403,0.292]},
+  mast: [["disobey_task_spec",137],["no_or_incorrect_verification",107],
+         ["step_repetition",8],["tool_execution_error",4]],
+  pareto: [
+    ["A:llama-405b B:claude C:claude",0.90,24177,0.01356],
+    ["A:gemma-27b B:claude C:claude",0.867,16211,0.01271],
+    ["A:qwen-72b B:gemini C:llama-405b",0.867,27691,0.00774],
+    ["A:mixtral B:gemini C:claude",0.833,18817,0.01188],
+    ["A:gemini B:gpt-4o C:gemini",0.833,19750,0.01059],
+    ["A:claude B:gemma-27b C:claude",0.80,15768,0.01258],
+    ["A:gemma-27b B:qwen-72b C:gemini",0.80,18417,0.00623],
+    ["A:gpt-4o B:gemma-27b C:gemini",0.733,17373,0.01147],
+    ["A:phi-mini B:gpt-4o-mini C:gpt-4o",0.667,9978,0.00792],
+    ["A:phi-mini B:qwen-72b C:gemini",0.667,18247,0.00667],
+    ["A:phi-mini B:gpt-4o C:mixtral",0.60,10580,0.00748],
+    ["A:gemma-27b B:qwen-72b C:gpt-4o-mini",0.60,14802,0.00685],
+    ["A:llama-70b B:gemini C:gemma-27b",0.60,17483,0.00633],
+    ["A:gemma-27b B:phi-mini C:gemini",0.533,12509,0.00651],
+    ["A:phi-mini B:gemma-27b C:gemma-27b",0.50,8602,0.00509],
+    ["A:gemma-27b B:phi-mini C:gpt-4o-mini",0.367,8095,0.00537]
+  ]
 };
+const NS="http://www.w3.org/2000/svg";
+const el=(t,a={})=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
+const C={teal:"#3fd0c9",violet:"#a78bfa",amber:"#f5b953",red:"#f2668b",green:"#59d499",mut:"#95a3b8",line:"#26303f"};
 
-// ---- optional live override from committed results --------------------------
-async function tryOverride(){
-  try{
-    const r = await fetch('./data/demo.json',{cache:'no-store'});
-    if(r.ok){ Object.assign(DATA, await r.json()); }
-  }catch(e){/* embedded data is fine */}
+function hbars(id,data,color,fmt){
+  const s=document.getElementById(id);const W=460,H=+s.getAttribute("viewBox").split(" ")[3];
+  const n=data.length,pad=8,lblW=170,rowH=(H-pad*2)/n,barH=rowH-8,max=Math.max(...data.map(d=>d[1]));
+  data.forEach((d,i)=>{
+    const y=pad+i*rowH;
+    s.appendChild(el("text",{x:lblW-8,y:y+barH/2+4,"text-anchor":"end",fill:C.mut,"font-size":12})).textContent=d[0];
+    const w=(W-lblW-60)*(d[1]/max);
+    s.appendChild(el("rect",{x:lblW,y,width:Math.max(w,1),height:barH,rx:4,fill:color,opacity:0.9}));
+    s.appendChild(el("text",{x:lblW+w+6,y:y+barH/2+4,fill:C.mut,"font-size":12})).textContent=fmt(d[1]);
+  });
 }
+hbars("shapley",DATA.shapley,C.teal,v=>"+"+v.toFixed(3));
+hbars("mast",DATA.mast,C.red,v=>String(v));
 
-const $=(s,e=document)=>e.querySelector(s);
-const palette={ink:'#e7edf5',muted:'#8a97ab',accent:'#5b8cff',good:'#37d39a',bad:'#ff6b6b',line:'#1e2940'};
-Chart.defaults.color=palette.muted; Chart.defaults.borderColor=palette.line; Chart.defaults.font.family='inherit';
+(function(){
+  const s=document.getElementById("passk");const W=620,H=280,L=44,B=40,T=16,R=16;
+  const ks=DATA.passk.ks,xmax=ks[ks.length-1];
+  const X=k=>L+(W-L-R)*((k-1)/(xmax-1)), Y=v=>T+(H-T-B)*(1-v);
+  [0,0.25,0.5,0.75,1].forEach(g=>{
+    s.appendChild(el("line",{x1:L,y1:Y(g),x2:W-R,y2:Y(g),stroke:C.line}));
+    s.appendChild(el("text",{x:L-8,y:Y(g)+4,"text-anchor":"end",fill:C.mut,"font-size":11})).textContent=g.toFixed(2);
+  });
+  ks.forEach(k=>s.appendChild(el("text",{x:X(k),y:H-B+18,"text-anchor":"middle",fill:C.mut,"font-size":11})).textContent="k="+k);
+  const draw=(series,color)=>{
+    let d="";series.forEach((v,i)=>{d+=(i?"L":"M")+X(ks[i])+" "+Y(v)+" ";});
+    s.appendChild(el("path",{d,fill:"none",stroke:color,"stroke-width":2.5}));
+    series.forEach((v,i)=>s.appendChild(el("circle",{cx:X(ks[i]),cy:Y(v),r:3.5,fill:color})));
+  };
+  draw(DATA.passk["gpt-4o"],C.teal);draw(DATA.passk["phi-3.5-mini"],C.red);
+})();
 
-function cards(el,items){el.innerHTML=items.map(([h,v,c])=>
-  `<div class="card"><h4>${h}</h4><div class="stat">${v}</div><div class="ci">${c}</div></div>`).join('')}
-
-function render(){
-  $('#repoLink').href=DATA.meta.repo; $('#prLink').href=DATA.meta.pr; $('#ciLink').href=DATA.meta.ci;
-
-  // ---- Part 1
-  cards($('#p1cards'),DATA.p1.cards);
-  const ab=[...DATA.p1.ablations].sort((a,b)=>a.delta-b.delta);
-  new Chart($('#ablChart'),{type:'bar',data:{labels:ab.map(a=>a.label),
-    datasets:[{data:ab.map(a=>a.delta),backgroundColor:ab.map(a=>a.sig?'#ff6b6bcc':'#5b8cff66'),
-      borderColor:ab.map(a=>a.sig?palette.bad:palette.accent),borderWidth:1}]},
-    options:{indexAxis:'y',plugins:{legend:{display:false},
-      tooltip:{callbacks:{label:c=>`Δ ${c.raw>0?'+':''}${c.raw.toFixed(3)} ${ab[c.dataIndex].sig?'(significant)':'(n.s.)'}`}}},
-      scales:{x:{title:{display:true,text:'Δ success'}}}}});
-  const sh=DATA.p1.shapley;
-  new Chart($('#shapChart'),{type:'bar',data:{labels:sh.map(s=>s[0]),
-    datasets:[{data:sh.map(s=>s[1]),backgroundColor:'#37d39a99',borderColor:palette.good,borderWidth:1}]},
-    options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{title:{display:true,text:'Shapley credit'}}}}});
-  new Chart($('#tempChart'),{type:'line',data:{labels:DATA.p1.temp.x,
-    datasets:[{data:DATA.p1.temp.y,borderColor:palette.accent,backgroundColor:'#5b8cff22',fill:true,tension:.3,pointRadius:4}]},
-    options:{plugins:{legend:{display:false}},scales:{x:{title:{display:true,text:'temperature'}},
-      y:{title:{display:true,text:'success'},suggestedMin:0.8,suggestedMax:1}}}});
-  const a=DATA.p1.ab;
-  $('#abBox').innerHTML=`
-    <table><tr><th>arm</th><th>success</th><th>95% CI (Wilson)</th></tr>
-    <tr><td>gpt-4o</td><td><b>${a.a.toFixed(3)}</b></td><td>${a.a_lo.toFixed(3)} – ${a.a_hi.toFixed(3)}</td></tr>
-    <tr><td>phi-3.5-mini</td><td><b>${a.b.toFixed(3)}</b></td><td>${a.b_lo.toFixed(3)} – ${a.b_hi.toFixed(3)}</td></tr></table>
-    <div class="best" style="border-color:var(--bad)">z = ${a.z.toFixed(2)} · p = ${a.p.toFixed(3)}
-      <span class="pill sig">significant</span><div class="ci" style="margin-top:6px">The difference is real, not run-to-run luck.</div></div>`;
-  $('#cfBox').innerHTML=`<p style="margin:0;color:var(--ink)">${DATA.p1.cf}</p>`;
-
-  // ---- Part 2
-  cards($('#p2cards'),DATA.p2.cards);
-  $('#qBox').innerHTML=DATA.p2.q.map(q=>`<div class="q ${q.sig?'sig':'ns'}">
-    <div>${q.q} <span class="d" style="color:${q.sig?'var(--bad)':'var(--muted)'}">Δ ${q.d>0?'+':''}${q.d.toFixed(3)}</span>
-    <span class="pill ${q.sig?'sig':'ns'}">${q.sig?'significant':'n.s.'}</span></div>
-    <div class="n">${q.n}</div></div>`).join('');
-  buildPareto();
-
-  // ---- Live
-  cards($('#livecards'),DATA.live.cards);
-  $('#liveTable tbody').innerHTML=DATA.live.tasks.map(t=>`<tr><td>${t.id}${t.note?`<div class="ci">${t.note}</div>`:''}</td>
-    <td class="mono">${t.judge}</td><td><span class="pill ${t.pass?'ok':'sig'}">${t.pass?'PASS':'FAIL'}</span></td></tr>`).join('');
-  $('#bugBox').innerHTML=DATA.live.bugs.map(b=>`<div class="q sig"><div class="n" style="color:var(--ink)">${b}</div></div>`).join('');
-}
-
-let paretoChart;
-function scalarise(p,wLat,wCost){return p.acc - wLat*(p.lat/DATA.p2.refLat) - wCost*(p.cost/DATA.p2.refCost);}
-function buildPareto(){
-  const ctx=$('#paretoChart');
-  paretoChart=new Chart(ctx,{type:'scatter',data:{datasets:[]},options:{
-    plugins:{legend:{display:false},tooltip:{callbacks:{
-      label:c=>{const p=c.raw.p;return [`${p.label}`,`acc ${p.acc.toFixed(3)} · ${(p.lat/1000).toFixed(1)}s · $${p.cost.toFixed(4)}`];}}}},
-    scales:{x:{title:{display:true,text:'chain latency (ms) — lower better'}},
-            y:{title:{display:true,text:'chain accuracy — higher better'},suggestedMin:0.3,suggestedMax:0.95}}}});
-  updatePareto();
-}
-function updatePareto(){
-  const wLat=+$('#wLat').value, wCost=+$('#wCost').value;
-  $('#wLatV').textContent=wLat.toFixed(2); $('#wCostV').textContent=wCost.toFixed(2);
-  const pts=DATA.p2.pareto.map(p=>({...p,u:scalarise(p,wLat,wCost)}));
-  let best=pts[0]; pts.forEach(p=>{if(p.u>best.u)best=p;});
-  paretoChart.data.datasets=[{
-    data:pts.map(p=>({x:p.lat,y:p.acc,p})),
-    parsing:false,
-    pointRadius:pts.map(p=>6+p.cost*900),
-    pointHoverRadius:pts.map(p=>8+p.cost*900),
-    backgroundColor:pts.map(p=>p===best?'#37d39a':'#5b8cffaa'),
-    borderColor:pts.map(p=>p===best?'#37d39a':'#5b8cff'),
-    borderWidth:pts.map(p=>p===best?2:1)
-  }];
-  paretoChart.update('none');
-  $('#bestBox').innerHTML=`Best pick under these weights: <b>${best.label}</b><div class="ci" style="margin-top:4px">
-    accuracy ${best.acc.toFixed(3)} · latency ${(best.lat/1000).toFixed(1)}s · cost $${best.cost.toFixed(4)} ·
-    utility ${best.u.toFixed(3)}</div>
-    <div class="ci" style="margin-top:6px">Notice strong models land on the stages that matter (B, C) and a cheap
-    one on the easy research stage (A) — the optimiser rediscovers "spend on the bottleneck."</div>`;
-}
-
-document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
-  t.classList.add('active'); $('#'+t.dataset.t).classList.add('active');
-});
-
-tryOverride().then(()=>{ render();
-  $('#wLat').addEventListener('input',updatePareto);
-  $('#wCost').addEventListener('input',updatePareto);
-});
+(function(){
+  const s=document.getElementById("pareto");const W=480,H=300,L=46,B=42,T=14,R=14;
+  const pts=DATA.pareto,lat=pts.map(p=>p[2]),acc=pts.map(p=>p[1]),cost=pts.map(p=>p[3]);
+  const latmin=Math.min(...lat),latmax=Math.max(...lat),accmin=Math.min(...acc),accmax=Math.max(...acc);
+  const cmin=Math.min(...cost),cmax=Math.max(...cost);
+  const X=v=>L+(W-L-R)*((v-latmin)/(latmax-latmin));
+  const Y=v=>T+(H-T-B)*(1-(v-accmin)/(accmax-accmin));
+  const layer=el("g");s.appendChild(layer);
+  s.appendChild(el("text",{x:W/2,y:H-8,"text-anchor":"middle",fill:C.mut,"font-size":11})).textContent="latency (lower → left) →";
+  s.appendChild(el("text",{x:14,y:H/2,fill:C.mut,"font-size":11,transform:"rotate(-90 14 "+(H/2)+")","text-anchor":"middle"})).textContent="accuracy →";
+  const latRef=12000,costRef=0.05;
+  function render(wlat,wcost){
+    while(layer.firstChild)layer.removeChild(layer.firstChild);
+    let best=-1e9,bi=0;
+    pts.forEach((p,i)=>{const u=p[1]-wlat*(p[2]/latRef)-wcost*(p[3]/costRef);if(u>best){best=u;bi=i;}});
+    pts.forEach((p,i)=>{
+      const r=5+18*((p[3]-cmin)/(cmax-cmin||1));
+      layer.appendChild(el("circle",{cx:X(p[2]),cy:Y(p[1]),r:r,
+        fill:i===bi?C.amber:C.teal,opacity:i===bi?0.95:0.5,
+        stroke:i===bi?C.amber:"none","stroke-width":2}));
+    });
+    const p=pts[bi];
+    document.getElementById("paretoPick").innerHTML=
+      "<b>best pick:</b> "+p[0]+"<br>accuracy <b>"+p[1].toFixed(2)+"</b> · latency "+(p[2]/1000).toFixed(1)+"s · cost $"+p[3].toFixed(4);
+  }
+  const wl=document.getElementById("wlat"),wc=document.getElementById("wcost");
+  function upd(){
+    document.getElementById("wlatv").textContent=(+wl.value).toFixed(2);
+    document.getElementById("wcostv").textContent=(+wc.value).toFixed(2);
+    render(+wl.value,+wc.value);
+  }
+  wl.addEventListener("input",upd);wc.addEventListener("input",upd);upd();
+})();
 </script>
 </body>
 </html>
